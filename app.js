@@ -754,9 +754,348 @@
     }
   }
 
+  // ══════════════════════════════════════════════════════
+  //  HOT ALTCOIN TAB
+  // ══════════════════════════════════════════════════════
+
+  const EXCLUDE_SYMBOLS = new Set([
+    // Stablecoins
+    "USDCUSDT","BUSDUSDT","TUSDUSDT","DAIUSDT","FDUSDUSDT","USDPUSDT","EURUSDT",
+    // Leveraged tokens
+    "BTCDOWNUSDT","BTCUPUSDT","ETHDOWNUSDT","ETHUPUSDT",
+    // Main coins (already in main tab)
+    "BTCUSDT","ETHUSDT","SOLUSDT",
+  ]);
+
+  // Also exclude anything with "UP","DOWN","BEAR","BULL" in name
+  function isExcluded(sym) {
+    if (EXCLUDE_SYMBOLS.has(sym)) return true;
+    const base = sym.replace("USDT", "");
+    return /UP$|DOWN$|BEAR$|BULL$|^USD/.test(base);
+  }
+
+  let altSortMode = "gainers"; // gainers | losers | volume
+  let altCoins = [];            // sorted list of alt tickers
+  let activeAltSymbol = null;
+
+  async function fetchAllTickers() {
+    return cached("all-tickers", 25_000, () =>
+      fetchJSON(`${BINANCE}/ticker/24hr`)
+    );
+  }
+
+  function filterAndSortAlts(tickers) {
+    // Filter USDT pairs, exclude stables/leverage/main
+    let alts = tickers.filter(t => {
+      if (!t.symbol.endsWith("USDT")) return false;
+      if (isExcluded(t.symbol)) return false;
+      if (parseFloat(t.quoteVolume) < 1_000_000) return false; // min $1M 24h vol
+      return true;
+    });
+
+    // Sort
+    if (altSortMode === "gainers") {
+      alts.sort((a,b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
+    } else if (altSortMode === "losers") {
+      alts.sort((a,b) => parseFloat(a.priceChangePercent) - parseFloat(b.priceChangePercent));
+    } else {
+      alts.sort((a,b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume));
+    }
+
+    return alts.slice(0, 12);
+  }
+
+  function fmtVol(v) {
+    const n = parseFloat(v);
+    if (n >= 1e9) return `${(n/1e9).toFixed(1)}B`;
+    if (n >= 1e6) return `${(n/1e6).toFixed(1)}M`;
+    if (n >= 1e3) return `${(n/1e3).toFixed(0)}K`;
+    return `${n.toFixed(0)}`;
+  }
+
+  function fmtPrice(v) {
+    const n = parseFloat(v);
+    if (n >= 1000) return `${n.toFixed(2)}`;
+    if (n >= 1) return `${n.toFixed(3)}`;
+    if (n >= 0.01) return `${n.toFixed(4)}`;
+    return `${n.toFixed(6)}`;
+  }
+
+  function getAltTags(ticker) {
+    const tags = [];
+    const pct = Math.abs(parseFloat(ticker.priceChangePercent));
+    const vol = parseFloat(ticker.quoteVolume);
+    if (pct > 15) tags.push({ text: `🔥 ${pct > 30 ? '🚀 박포적' : '급변'}`, hot: true });
+    if (vol > 500_000_000) tags.push({ text: '💧 대량거래', hot: true });
+    if (vol > 100_000_000) tags.push({ text: '💰 고볼륨', hot: false });
+    else tags.push({ text: '📊 일반', hot: false });
+    return tags;
+  }
+
+  function drawAltSparkline(canvasEl, closes) {
+    if (!canvasEl || closes.length < 2) return;
+    const ctx = canvasEl.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvasEl.getBoundingClientRect();
+    canvasEl.width = rect.width * dpr; canvasEl.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+    const min = Math.min(...closes)*0.999, max = Math.max(...closes)*1.001, range = max-min||1;
+    const toX = i => (i/(closes.length-1))*W;
+    const toY = v => H - ((v-min)/range)*(H-4) - 2;
+    const up = closes[closes.length-1] >= closes[0];
+    ctx.clearRect(0,0,W,H);
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0, up?"rgba(52,211,153,0.15)":"rgba(251,113,133,0.15)"); grad.addColorStop(1,"transparent");
+    ctx.beginPath(); ctx.moveTo(toX(0),H);
+    for(let i=0;i<closes.length;i++) ctx.lineTo(toX(i),toY(closes[i]));
+    ctx.lineTo(toX(closes.length-1),H); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    ctx.beginPath();
+    for(let i=0;i<closes.length;i++){const x=toX(i),y=toY(closes[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.strokeStyle=up?"#34d399":"#fb7185"; ctx.lineWidth=1.3; ctx.lineJoin="round"; ctx.stroke();
+  }
+
+  async function renderAltGrid() {
+    const grid = document.getElementById("alt-grid");
+    if (!altCoins.length) { grid.innerHTML = '<div class="alt-loading">데이터 없음</div>'; return; }
+
+    grid.innerHTML = "";
+    altCoins.forEach((t, idx) => {
+      const pct = parseFloat(t.priceChangePercent);
+      const tags = getAltTags(t);
+      const base = t.symbol.replace("USDT","");
+
+      const card = document.createElement("div");
+      card.className = "acard";
+      card.style.animationDelay = `${idx * 0.04}s`;
+      card.dataset.symbol = t.symbol;
+
+      card.innerHTML = `
+        <div class="acard__top">
+          <div class="acard__rank ${idx<3?'top3':''}">${idx+1}</div>
+          <div>
+            <div class="acard__name">${base}</div>
+            <div class="acard__symbol">${t.symbol}</div>
+          </div>
+          <div class="acard__change ${pct>=0?'up':'down'}">${fmtPct(pct)}</div>
+        </div>
+        <div class="acard__row">
+          <span class="acard__price">${fmtPrice(t.lastPrice)}</span>
+          <span class="acard__vol">Vol ${fmtVol(t.quoteVolume)}</span>
+        </div>
+        <canvas class="acard__spark" data-spark="${t.symbol}" height="36"></canvas>
+        <div class="acard__tags">${tags.map(tg => `<span class="acard__tag ${tg.hot?'hot':''}">${tg.text}</span>`).join("")}</div>`;
+
+      card.addEventListener("click", () => openAltDetail(t.symbol));
+      grid.appendChild(card);
+    });
+
+    // Load sparklines for visible alt cards
+    loadAltSparklines();
+  }
+
+  async function loadAltSparklines() {
+    for (const t of altCoins) {
+      const canvas = document.querySelector(`canvas[data-spark="${t.symbol}"]`);
+      if (!canvas) continue;
+      try {
+        const kl = await getKlines(t.symbol, "1h", 48);
+        const closes = kl.map(k => parseFloat(k[4]));
+        drawAltSparkline(canvas, closes);
+      } catch { /* skip */ }
+    }
+  }
+
+  async function openAltDetail(symbol) {
+    activeAltSymbol = symbol;
+    const panel = document.getElementById("alt-detail");
+    panel.style.display = "";
+
+    const base = symbol.replace("USDT","");
+    const ticker = altCoins.find(t => t.symbol === symbol);
+    const pct = ticker ? parseFloat(ticker.priceChangePercent) : 0;
+
+    document.getElementById("ad-icon").textContent = "🪙";
+    document.getElementById("ad-title").textContent = base;
+    document.getElementById("ad-pair").textContent = `${base} / USDT`;
+
+    const badge = document.getElementById("ad-change");
+    badge.textContent = fmtPct(pct);
+    badge.className = `alt-detail__badge ${pct>=0?'up':'down'}`;
+
+    document.getElementById("ad-price").textContent = ticker ? fmtPrice(ticker.lastPrice) : "$—";
+
+    try {
+      const [hKl, dKl] = await Promise.all([
+        getKlines(symbol, "1h", 168),
+        getKlines(symbol, "1d", 30),
+      ]);
+
+      const closes = hKl.map(k=>parseFloat(k[4]));
+      const highs = hKl.map(k=>parseFloat(k[2]));
+      const lows = hKl.map(k=>parseFloat(k[3]));
+      const dCloses = dKl.map(k=>parseFloat(k[4]));
+      const price = parseFloat(ticker.lastPrice);
+
+      const pred = computePrediction(price, closes, dCloses, highs, lows);
+
+      // Stats
+      document.getElementById("ad-stats").innerHTML = [
+        { label:"RSI(14)", val: fmtNum(pred.rsi,1) },
+        { label:"MACD Hist", val: fmtNum(pred.macd.histogram,4), cls: pred.macd.histogram>=0?"up":"down" },
+        { label:"BB %B", val: fmtNum(pred.bb.pctB*100,1)+"%" },
+        { label:"Stoch K/D", val:`${fmtNum(pred.stoch.k,0)}/${fmtNum(pred.stoch.d,0)}` },
+        { label:"ATR", val: fmtPrice(pred.atr) },
+        { label:"종합", val: pred.overall==="bullish"?"강세":pred.overall==="bearish"?"약세":"중립", cls: pred.overall==="bullish"?"up":pred.overall==="bearish"?"down":"" },
+      ].map(i => `<div class="stat"><span class="stat__label">${i.label}</span><span class="stat__val ${i.cls||""}">${i.val}</span></div>`).join("");
+
+      // Predictions
+      const diff1m = ((pred.oneMinute-price)/price)*100;
+      const diff1d = ((pred.oneDay-price)/price)*100;
+      document.getElementById("ad-preds").innerHTML = `
+        <div class="sp">
+          <span class="sp__label">1분 예측</span>
+          <span class="sp__val ${pred.oneMinute>=price?'up':'down'}">${fmtPrice(pred.oneMinute)}</span>
+          <span class="sp__pct ${diff1m>=0?'up':'down'}">${fmtPct(diff1m)}</span>
+        </div>
+        <div class="sp-div"></div>
+        <div class="sp">
+          <span class="sp__label">1일 예측</span>
+          <span class="sp__val ${pred.oneDay>=price?'up':'down'}">${fmtPrice(pred.oneDay)}</span>
+          <span class="sp__pct ${diff1d>=0?'up':'down'}">${fmtPct(diff1d)}</span>
+        </div>`;
+
+      // Chart — draw candlestick
+      drawAltDetailChart(hKl, pred);
+
+    } catch(e) {
+      console.error("Alt detail error:", e);
+      document.getElementById("ad-stats").innerHTML = '<span style="color:var(--red)">데이터 로드 실패</span>';
+    }
+
+    panel.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  }
+
+  function drawAltDetailChart(klines, pred) {
+    const canvas = document.getElementById("ad-chart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio||1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width=rect.width*dpr; canvas.height=rect.height*dpr;
+    ctx.scale(dpr,dpr);
+    const W=rect.width, H=rect.height;
+
+    const closes=klines.map(k=>parseFloat(k[4])),highs=klines.map(k=>parseFloat(k[2]));
+    const lows=klines.map(k=>parseFloat(k[3])),opens=klines.map(k=>parseFloat(k[1]));
+    const n=closes.length;
+    const pMin=Math.min(...lows)*0.998,pMax=Math.max(...highs)*1.002,pR=pMax-pMin||1;
+    const cW=Math.max(1,(W/n)*0.6),gap=W/n;
+    const toX=i=>gap*i+gap/2;
+    const toY=v=>8+(H-16)-((v-pMin)/pR)*(H-16);
+
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle="rgba(99,102,241,0.06)";ctx.lineWidth=0.5;
+    for(let i=0;i<4;i++){const y=8+((H-16)/3)*i;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    for(let i=0;i<n;i++){
+      const x=toX(i),oY=toY(opens[i]),cY=toY(closes[i]),hY=toY(highs[i]),lY=toY(lows[i]);
+      const bull=closes[i]>=opens[i],col=bull?"#34d399":"#fb7185";
+      ctx.beginPath();ctx.moveTo(x,hY);ctx.lineTo(x,lY);ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle=col;ctx.fillRect(x-cW/2,Math.min(oY,cY),cW,Math.max(Math.abs(oY-cY),1));
+    }
+
+    // EMA overlays
+    const e8=ema(closes,8),e21=ema(closes,21);
+    for(const[s,c]of[[e8,"#fbbf24"],[e21,"#818cf8"]]){
+      ctx.beginPath();
+      for(let i=0;i<s.length;i++){const x=toX(i),y=toY(s[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+      ctx.strokeStyle=c;ctx.lineWidth=1;ctx.stroke();
+    }
+
+    // Prediction dot
+    if(pred){
+      const pP=pred.oneDay,lX=toX(n-1),lY2=toY(closes[n-1]),pX=W-6;
+      const pY=toY(Math.max(pMin,Math.min(pMax,pP)));
+      const up=pP>=closes[n-1];
+      ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(lX,lY2);ctx.lineTo(pX,pY);
+      ctx.strokeStyle=up?"#34d399":"#fb7185";ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(pX,pY,4,0,Math.PI*2);
+      ctx.fillStyle=up?"#34d399":"#fb7185";ctx.fill();
+      ctx.strokeStyle="#0c1220";ctx.lineWidth=1.5;ctx.stroke();
+    }
+  }
+
+  function closeAltDetail() {
+    activeAltSymbol = null;
+    document.getElementById("alt-detail").style.display = "none";
+  }
+
+  async function refreshAltTab() {
+    try {
+      const allTickers = await fetchAllTickers();
+      altCoins = filterAndSortAlts(allTickers);
+      await renderAltGrid();
+    } catch(e) {
+      console.error("Alt refresh error:", e);
+      document.getElementById("alt-grid").innerHTML = '<div class="alt-loading" style="color:var(--red)">데이터 로드 실패 — 재시도 중...</div>';
+    }
+  }
+
+  // ── Tab System ─────────────────────────────────────────
+  let currentTab = "main";
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("tab-btn--active", b.dataset.tab === tab));
+    document.getElementById("tab-main").style.display = tab === "main" ? "" : "none";
+    document.getElementById("tab-alt").style.display = tab === "alt" ? "" : "none";
+
+    if (tab === "alt" && altCoins.length === 0) {
+      refreshAltTab();
+    }
+  }
+
+  function bindAltEvents() {
+    // Tab switching
+    document.getElementById("tab-nav").addEventListener("click", e => {
+      const btn = e.target.closest(".tab-btn");
+      if (btn) switchTab(btn.dataset.tab);
+    });
+
+    // Sort buttons
+    document.getElementById("alt-sort-group").addEventListener("click", e => {
+      const btn = e.target.closest(".alt-sort-btn");
+      if (!btn) return;
+      altSortMode = btn.dataset.sort;
+      document.querySelectorAll(".alt-sort-btn").forEach(b => b.classList.toggle("alt-sort-btn--active", b.dataset.sort === altSortMode));
+      // Re-sort existing data
+      fetchAllTickers().then(tickers => {
+        altCoins = filterAndSortAlts(tickers);
+        renderAltGrid();
+      });
+    });
+
+    // Refresh button
+    document.getElementById("alt-refresh-btn").addEventListener("click", e => {
+      const btn = e.currentTarget;
+      btn.classList.add("spinning");
+      // Clear cache to force fresh
+      cache.delete("all-tickers");
+      refreshAltTab().finally(() => setTimeout(() => btn.classList.remove("spinning"), 500));
+    });
+
+    // Alt detail close
+    document.getElementById("ad-close").addEventListener("click", closeAltDetail);
+  }
+
   // ── Init ───────────────────────────────────────────────
   bindEvents();
+  bindAltEvents();
   refresh();
-  setInterval(refresh, REFRESH_MS);
+  setInterval(() => {
+    refresh();
+    if (currentTab === "alt") refreshAltTab();
+  }, REFRESH_MS);
 
 })();

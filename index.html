@@ -39,6 +39,15 @@
 
   <main class="main">
 
+    <!-- ===== Tab Navigation ===== -->
+    <nav class="tab-nav" id="tab-nav">
+      <button class="tab-btn tab-btn--active" data-tab="main">💎 메인 코인</button>
+      <button class="tab-btn" data-tab="alt">🔥 핫 알트코인</button>
+    </nav>
+
+    <!-- ===== TAB: Main Coins ===== -->
+    <div class="tab-content" id="tab-main">
+
     <!-- ===== Summary Cards ===== -->
     <section class="summary-cards" id="summary-cards">
       <!-- BTC -->
@@ -99,6 +108,52 @@
         <button class="scard__expand" data-target="SOL" title="상세 차트 보기">차트 열기 ▾</button>
       </div>
     </section>
+
+    </div><!-- /tab-main -->
+
+    <!-- ===== TAB: Hot Altcoins ===== -->
+    <div class="tab-content" id="tab-alt" style="display:none;">
+      <section class="alt-panel">
+        <div class="alt-panel__header">
+          <h3 class="panel-title">🔥 실시간 핫 알트코인 Top 12</h3>
+          <div class="alt-controls">
+            <div class="alt-sort-group" id="alt-sort-group">
+              <button class="alt-sort-btn alt-sort-btn--active" data-sort="gainers">급등 🚀</button>
+              <button class="alt-sort-btn" data-sort="losers">급락 📉</button>
+              <button class="alt-sort-btn" data-sort="volume">거래량 💰</button>
+            </div>
+            <button class="alt-refresh-btn" id="alt-refresh-btn" title="새로고침">↻</button>
+          </div>
+        </div>
+        <p class="alt-panel__desc">Binance USDT 페어 중 24시간 기준으로 가장 핫한 알트코인을 자동 탐지합니다. 스테이블코인·레버리지 토큰 제외.</p>
+        <div class="alt-grid" id="alt-grid">
+          <div class="alt-loading">알트코인 스캔 중...</div>
+        </div>
+        <p class="alt-panel__note">30초마다 자동 갱신 · 클릭하면 상세 예측을 확인할 수 있습니다.</p>
+      </section>
+
+      <!-- Alt Detail Modal -->
+      <section class="alt-detail" id="alt-detail" style="display:none;">
+        <div class="alt-detail__header">
+          <div class="alt-detail__coin">
+            <span class="alt-detail__icon" id="ad-icon">🪙</span>
+            <h3 id="ad-title">—</h3>
+            <span class="alt-detail__pair" id="ad-pair">— / USDT</span>
+            <span class="alt-detail__badge" id="ad-change">—</span>
+          </div>
+          <button class="detail-panel__close" id="ad-close" title="닫기">✕</button>
+        </div>
+        <div class="alt-detail__body">
+          <div class="alt-detail__price" id="ad-price">$—</div>
+          <div class="alt-detail__stats" id="ad-stats"></div>
+          <canvas id="ad-chart" height="220"></canvas>
+          <div class="alt-detail__preds" id="ad-preds"></div>
+        </div>
+      </section>
+    </div><!-- /tab-alt -->
+
+    <!-- ===== Detail Chart Panel (Main tab, moved outside tab for visibility) ===== -->
+    <!-- Note: detail-panel works globally across both tabs -->
 
     <!-- ===== Detail Chart Panel ===== -->
     <section class="detail-panel" id="detail-panel" style="display:none;">
