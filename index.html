@@ -1,53 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CryptoPricePredictor</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <header class="hero">
-      <h1>CryptoPricePredictor</h1>
-      <p>BTC / ETH 실시간 시세 + 1분 / 1일 예측</p>
-      <small id="last-updated">데이터를 불러오는 중...</small>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoPricePredictor — BTC / ETH 실시간 시세 + 예측</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-    <main>
-      <section class="grid" id="cards"></section>
+  <!-- Ambient background -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
 
-      <section class="panel">
-        <h2>예측 알고리즘 안내</h2>
-        <ul>
-          <li>최근 120분 가격으로 단기 기울기(트렌드)를 계산합니다.</li>
-          <li>최근 30일 종가 평균 대비 현재 가격 이격도를 반영합니다.</li>
-          <li>단기 + 중기 신호를 합쳐 <strong>1분 / 1일</strong> 예측값을 생성합니다.</li>
-          <li>API 응답은 메모리/로컬 캐시에 잠시 저장해 요청량을 줄입니다.</li>
-        </ul>
-      </section>
-    </main>
+  <header class="header">
+    <div class="header__brand">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
+          <path d="M10 22V10l6 8 6-8v12" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+        </svg>
+      </div>
+      <div>
+        <h1 class="header__title">CryptoPricePredictor</h1>
+        <p class="header__sub">BTC / ETH 실시간 시세 &amp; AI-Free 예측</p>
+      </div>
+    </div>
+    <div class="header__status">
+      <span class="pulse"></span>
+      <span id="status-text">연결 중...</span>
+    </div>
+  </header>
 
-    <template id="coin-template">
-      <article class="card">
-        <div class="card-header">
-          <h3 class="coin-name"></h3>
-          <span class="coin-symbol"></span>
-        </div>
-        <p class="current-price"></p>
-        <div class="prediction-row">
+  <main class="main">
+    <!-- Coin Cards -->
+    <div class="cards" id="cards">
+      <div class="card card--loading" data-coin="BTC">
+        <div class="card__top">
+          <div class="card__icon card__icon--btc">₿</div>
           <div>
-            <h4>다음 1분 예측</h4>
-            <p class="pred-minute"></p>
+            <h2 class="card__name">Bitcoin</h2>
+            <span class="card__symbol">BTC / USDT</span>
           </div>
-          <div>
-            <h4>다음 1일 예측</h4>
-            <p class="pred-day"></p>
+          <div class="card__change" id="btc-change">—</div>
+        </div>
+        <div class="card__price" id="btc-price">$—</div>
+        <canvas class="card__chart" id="btc-chart" height="120"></canvas>
+        <div class="card__predictions">
+          <div class="pred">
+            <span class="pred__label">1분 예측</span>
+            <span class="pred__value" id="btc-pred-1m">—</span>
+          </div>
+          <div class="pred-divider"></div>
+          <div class="pred">
+            <span class="pred__label">1일 예측</span>
+            <span class="pred__value" id="btc-pred-1d">—</span>
           </div>
         </div>
-        <p class="meta"></p>
-      </article>
-    </template>
+        <div class="card__meta" id="btc-meta"></div>
+      </div>
 
-    <script src="app.js" defer></script>
-  </body>
+      <div class="card card--loading" data-coin="ETH">
+        <div class="card__top">
+          <div class="card__icon card__icon--eth">Ξ</div>
+          <div>
+            <h2 class="card__name">Ethereum</h2>
+            <span class="card__symbol">ETH / USDT</span>
+          </div>
+          <div class="card__change" id="eth-change">—</div>
+        </div>
+        <div class="card__price" id="eth-price">$—</div>
+        <canvas class="card__chart" id="eth-chart" height="120"></canvas>
+        <div class="card__predictions">
+          <div class="pred">
+            <span class="pred__label">1분 예측</span>
+            <span class="pred__value" id="eth-pred-1m">—</span>
+          </div>
+          <div class="pred-divider"></div>
+          <div class="pred">
+            <span class="pred__label">1일 예측</span>
+            <span class="pred__value" id="eth-pred-1d">—</span>
+          </div>
+        </div>
+        <div class="card__meta" id="eth-meta"></div>
+      </div>
+    </div>
+
+    <!-- Algorithm explanation -->
+    <section class="info-panel">
+      <h3 class="info-panel__title">📐 예측 알고리즘</h3>
+      <div class="info-panel__grid">
+        <div class="info-item">
+          <span class="info-item__icon">📈</span>
+          <div>
+            <strong>EMA (지수이동평균)</strong>
+            <p>최근 가격에 가중치를 둔 이동평균으로 단기/중기 추세를 포착합니다.</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">📊</span>
+          <div>
+            <strong>RSI (상대강도지수)</strong>
+            <p>과매수/과매도 구간을 감지하여 가격 반전 신호를 반영합니다.</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">🔀</span>
+          <div>
+            <strong>MACD 크로스</strong>
+            <p>단기-장기 EMA 차이로 모멘텀 전환 시점을 판단합니다.</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">⚖️</span>
+          <div>
+            <strong>평균 회귀</strong>
+            <p>30일 이동평균 대비 이격도를 반영하여 과도한 이탈을 보정합니다.</p>
+          </div>
+        </div>
+      </div>
+      <p class="info-panel__disclaimer">⚠️ 본 예측은 기술적 분석 기반이며, 투자 조언이 아닙니다. 실제 투자 판단은 전문가 상담 후 결정하시기 바랍니다.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Data powered by <a href="https://www.binance.com" target="_blank" rel="noopener">Binance API</a> · Built for GitHub Pages</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
 </html>
