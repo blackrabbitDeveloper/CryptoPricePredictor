@@ -1,0 +1,135 @@
+:root {
+    color-scheme: dark;
+    --bg: #0b1220;
+    --panel: #121b2f;
+    --panel-border: #25304a;
+    --text: #edf2ff;
+    --subtle: #b4bfd9;
+    --accent: #60a5fa;
+    --good: #34d399;
+    --bad: #f87171;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    background: radial-gradient(circle at top, #111b33, var(--bg) 45%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  
+  .hero,
+  main {
+    width: min(1024px, 92vw);
+    margin: 0 auto;
+  }
+  
+  .hero {
+    padding: 3rem 0 2rem;
+  }
+  
+  .hero h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+  }
+  
+  .hero p {
+    margin: 0.2rem 0;
+    color: var(--subtle);
+  }
+  
+  #last-updated {
+    color: #9ca8c8;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  
+  .card,
+  .panel {
+    background: rgba(18, 27, 47, 0.88);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
+    backdrop-filter: blur(2px);
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  
+  .coin-name {
+    margin: 0;
+  }
+  
+  .coin-symbol {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  
+  .current-price {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0.8rem 0;
+  }
+  
+  .prediction-row {
+    display: flex;
+    gap: 0.75rem;
+  }
+  
+  .prediction-row > div {
+    flex: 1;
+    background: rgba(8, 14, 26, 0.45);
+    border-radius: 12px;
+    padding: 0.75rem;
+  }
+  
+  .prediction-row h4 {
+    margin: 0 0 0.45rem;
+    font-size: 0.92rem;
+    color: var(--subtle);
+  }
+  
+  .pred-minute,
+  .pred-day {
+    margin: 0;
+    font-weight: 700;
+  }
+  
+  .up {
+    color: var(--good);
+  }
+  
+  .down {
+    color: var(--bad);
+  }
+  
+  .meta {
+    color: var(--subtle);
+    margin: 0.9rem 0 0;
+    font-size: 0.86rem;
+  }
+  
+  .panel {
+    margin: 1rem 0 2rem;
+  }
+  
+  .panel h2 {
+    margin-top: 0;
+  }
+  
+  .panel li {
+    line-height: 1.55;
+    color: var(--subtle);
+  }
+  

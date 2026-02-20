@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoPricePredictor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>CryptoPricePredictor</h1>
+      <p>BTC / ETH 실시간 시세 + 1분 / 1일 예측</p>
+      <small id="last-updated">데이터를 불러오는 중...</small>
+    </header>
+
+    <main>
+      <section class="grid" id="cards"></section>
+
+      <section class="panel">
+        <h2>예측 알고리즘 안내</h2>
+        <ul>
+          <li>최근 120분 가격으로 단기 기울기(트렌드)를 계산합니다.</li>
+          <li>최근 30일 종가 평균 대비 현재 가격 이격도를 반영합니다.</li>
+          <li>단기 + 중기 신호를 합쳐 <strong>1분 / 1일</strong> 예측값을 생성합니다.</li>
+          <li>API 응답은 메모리/로컬 캐시에 잠시 저장해 요청량을 줄입니다.</li>
+        </ul>
+      </section>
+    </main>
+
+    <template id="coin-template">
+      <article class="card">
+        <div class="card-header">
+          <h3 class="coin-name"></h3>
+          <span class="coin-symbol"></span>
+        </div>
+        <p class="current-price"></p>
+        <div class="prediction-row">
+          <div>
+            <h4>다음 1분 예측</h4>
+            <p class="pred-minute"></p>
+          </div>
+          <div>
+            <h4>다음 1일 예측</h4>
+            <p class="pred-day"></p>
+          </div>
+        </div>
+        <p class="meta"></p>
+      </article>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
