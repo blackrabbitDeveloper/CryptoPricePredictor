@@ -4,7 +4,7 @@
 
 ## 🚀 Live Demo
 
-GitHub Pages에 배포 후: `https://<username>.github.io/CryptoPricePredictor/`
+GitHub Pages에 배포 후: `https://blackrabbitDeveloper.github.io/CryptoPricePredictor/`
 
 ## 기능
 
