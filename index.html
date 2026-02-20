@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CryptoPricePredictor — BTC / ETH 실시간 시세 + 예측</title>
+  <title>CryptoPricePredictor — BTC / ETH / SOL</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,120 +15,206 @@
   <div class="bg-grid"></div>
   <div class="bg-glow bg-glow--1"></div>
   <div class="bg-glow bg-glow--2"></div>
+  <div class="bg-glow bg-glow--3"></div>
 
   <header class="header">
     <div class="header__brand">
       <div class="logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
-          <path d="M10 22V10l6 8 6-8v12" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="10" fill="url(#lg)"/>
+          <path d="M10 26V10l8 10 8-10v16" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="lg" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
         </svg>
       </div>
       <div>
         <h1 class="header__title">CryptoPricePredictor</h1>
-        <p class="header__sub">BTC / ETH 실시간 시세 &amp; AI-Free 예측</p>
+        <p class="header__sub">BTC · ETH · SOL — 실시간 시세 &amp; 기술적 예측</p>
       </div>
     </div>
     <div class="header__status">
-      <span class="pulse"></span>
+      <span class="pulse" id="pulse"></span>
       <span id="status-text">연결 중...</span>
     </div>
   </header>
 
   <main class="main">
-    <!-- Coin Cards -->
-    <div class="cards" id="cards">
-      <div class="card card--loading" data-coin="BTC">
-        <div class="card__top">
-          <div class="card__icon card__icon--btc">₿</div>
-          <div>
-            <h2 class="card__name">Bitcoin</h2>
-            <span class="card__symbol">BTC / USDT</span>
-          </div>
-          <div class="card__change" id="btc-change">—</div>
-        </div>
-        <div class="card__price" id="btc-price">$—</div>
-        <canvas class="card__chart" id="btc-chart" height="120"></canvas>
-        <div class="card__predictions">
-          <div class="pred">
-            <span class="pred__label">1분 예측</span>
-            <span class="pred__value" id="btc-pred-1m">—</span>
-          </div>
-          <div class="pred-divider"></div>
-          <div class="pred">
-            <span class="pred__label">1일 예측</span>
-            <span class="pred__value" id="btc-pred-1d">—</span>
-          </div>
-        </div>
-        <div class="card__meta" id="btc-meta"></div>
-      </div>
 
-      <div class="card card--loading" data-coin="ETH">
-        <div class="card__top">
-          <div class="card__icon card__icon--eth">Ξ</div>
-          <div>
-            <h2 class="card__name">Ethereum</h2>
-            <span class="card__symbol">ETH / USDT</span>
+    <!-- ===== Summary Cards ===== -->
+    <section class="summary-cards" id="summary-cards">
+      <!-- BTC -->
+      <div class="scard scard--loading" data-coin="BTC">
+        <div class="scard__top">
+          <div class="scard__icon scard__icon--btc">₿</div>
+          <div class="scard__info">
+            <h2 class="scard__name">Bitcoin</h2>
+            <span class="scard__pair">BTC / USDT</span>
           </div>
-          <div class="card__change" id="eth-change">—</div>
+          <div class="scard__badge" id="btc-change">—</div>
         </div>
-        <div class="card__price" id="eth-price">$—</div>
-        <canvas class="card__chart" id="eth-chart" height="120"></canvas>
-        <div class="card__predictions">
-          <div class="pred">
-            <span class="pred__label">1분 예측</span>
-            <span class="pred__value" id="eth-pred-1m">—</span>
-          </div>
-          <div class="pred-divider"></div>
-          <div class="pred">
-            <span class="pred__label">1일 예측</span>
-            <span class="pred__value" id="eth-pred-1d">—</span>
-          </div>
+        <div class="scard__price" id="btc-price">$—</div>
+        <div class="scard__preds">
+          <div class="sp"><span class="sp__label">1분 예측</span><span class="sp__val" id="btc-p1m">—</span><span class="sp__pct" id="btc-p1m-pct"></span></div>
+          <div class="sp-div"></div>
+          <div class="sp"><span class="sp__label">1일 예측</span><span class="sp__val" id="btc-p1d">—</span><span class="sp__pct" id="btc-p1d-pct"></span></div>
         </div>
-        <div class="card__meta" id="eth-meta"></div>
+        <div class="scard__indicators" id="btc-indicators">—</div>
+        <button class="scard__expand" data-target="BTC" title="상세 차트 보기">차트 열기 ▾</button>
       </div>
-    </div>
+      <!-- ETH -->
+      <div class="scard scard--loading" data-coin="ETH">
+        <div class="scard__top">
+          <div class="scard__icon scard__icon--eth">Ξ</div>
+          <div class="scard__info">
+            <h2 class="scard__name">Ethereum</h2>
+            <span class="scard__pair">ETH / USDT</span>
+          </div>
+          <div class="scard__badge" id="eth-change">—</div>
+        </div>
+        <div class="scard__price" id="eth-price">$—</div>
+        <div class="scard__preds">
+          <div class="sp"><span class="sp__label">1분 예측</span><span class="sp__val" id="eth-p1m">—</span><span class="sp__pct" id="eth-p1m-pct"></span></div>
+          <div class="sp-div"></div>
+          <div class="sp"><span class="sp__label">1일 예측</span><span class="sp__val" id="eth-p1d">—</span><span class="sp__pct" id="eth-p1d-pct"></span></div>
+        </div>
+        <div class="scard__indicators" id="eth-indicators">—</div>
+        <button class="scard__expand" data-target="ETH" title="상세 차트 보기">차트 열기 ▾</button>
+      </div>
+      <!-- SOL -->
+      <div class="scard scard--loading" data-coin="SOL">
+        <div class="scard__top">
+          <div class="scard__icon scard__icon--sol">◎</div>
+          <div class="scard__info">
+            <h2 class="scard__name">Solana</h2>
+            <span class="scard__pair">SOL / USDT</span>
+          </div>
+          <div class="scard__badge" id="sol-change">—</div>
+        </div>
+        <div class="scard__price" id="sol-price">$—</div>
+        <div class="scard__preds">
+          <div class="sp"><span class="sp__label">1분 예측</span><span class="sp__val" id="sol-p1m">—</span><span class="sp__pct" id="sol-p1m-pct"></span></div>
+          <div class="sp-div"></div>
+          <div class="sp"><span class="sp__label">1일 예측</span><span class="sp__val" id="sol-p1d">—</span><span class="sp__pct" id="sol-p1d-pct"></span></div>
+        </div>
+        <div class="scard__indicators" id="sol-indicators">—</div>
+        <button class="scard__expand" data-target="SOL" title="상세 차트 보기">차트 열기 ▾</button>
+      </div>
+    </section>
 
-    <!-- Algorithm explanation -->
+    <!-- ===== Detail Chart Panel ===== -->
+    <section class="detail-panel" id="detail-panel" style="display:none;">
+      <div class="detail-panel__header">
+        <div class="detail-panel__coin">
+          <span class="detail-panel__icon" id="dp-icon"></span>
+          <h3 id="dp-title">Bitcoin</h3>
+          <span class="detail-panel__pair" id="dp-pair">BTC / USDT</span>
+        </div>
+        <div class="detail-panel__controls">
+          <div class="tf-group" id="tf-group">
+            <button class="tf-btn" data-tf="1m">1분</button>
+            <button class="tf-btn tf-btn--active" data-tf="1h">1시간</button>
+            <button class="tf-btn" data-tf="1d">1일</button>
+          </div>
+          <div class="overlay-group">
+            <label class="overlay-toggle"><input type="checkbox" id="ov-ema" checked /><span>EMA</span></label>
+            <label class="overlay-toggle"><input type="checkbox" id="ov-bb" checked /><span>BB</span></label>
+            <label class="overlay-toggle"><input type="checkbox" id="ov-vol" /><span>VOL</span></label>
+          </div>
+          <button class="detail-panel__close" id="dp-close" title="닫기">✕</button>
+        </div>
+      </div>
+      <div class="detail-panel__body">
+        <canvas id="detail-chart"></canvas>
+      </div>
+      <div class="detail-panel__footer">
+        <div class="detail-stats" id="detail-stats"></div>
+      </div>
+    </section>
+
+    <!-- ===== Prediction Confidence ===== -->
+    <section class="confidence-panel" id="confidence-panel">
+      <h3 class="panel-title">🎯 예측 신뢰도 대시보드</h3>
+      <div class="conf-grid" id="conf-grid"></div>
+    </section>
+
+    <!-- ===== Prediction History ===== -->
+    <section class="history-panel" id="history-panel">
+      <div class="history-panel__header">
+        <h3 class="panel-title">📜 예측 히스토리</h3>
+        <div class="history-controls">
+          <select id="history-coin" class="history-select">
+            <option value="ALL">전체</option>
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+            <option value="SOL">SOL</option>
+          </select>
+          <button id="history-clear" class="history-clear-btn" title="기록 초기화">초기화</button>
+        </div>
+      </div>
+      <div class="history-summary" id="history-summary"></div>
+      <div class="history-table-wrap">
+        <table class="history-table" id="history-table">
+          <thead>
+            <tr>
+              <th>시간</th>
+              <th>코인</th>
+              <th>당시 가격</th>
+              <th>1분 예측</th>
+              <th>1분 실제</th>
+              <th>1분 결과</th>
+              <th>1일 예측</th>
+              <th>1일 실제</th>
+              <th>1일 결과</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+      <p class="history-note">최근 100건 저장 · 1분 예측은 ~60초 후, 1일 예측은 ~24시간 후 실제 가격과 자동 비교됩니다.</p>
+    </section>
+
+    <!-- ===== Algorithm Info ===== -->
     <section class="info-panel">
-      <h3 class="info-panel__title">📐 예측 알고리즘</h3>
+      <h3 class="panel-title">📐 고도화 예측 알고리즘 (v2)</h3>
       <div class="info-panel__grid">
         <div class="info-item">
           <span class="info-item__icon">📈</span>
-          <div>
-            <strong>EMA (지수이동평균)</strong>
-            <p>최근 가격에 가중치를 둔 이동평균으로 단기/중기 추세를 포착합니다.</p>
-          </div>
+          <div><strong>EMA (8/21/50)</strong><p>지수이동평균 3단 크로스오버로 단기·중기·장기 추세를 동시에 포착합니다.</p></div>
         </div>
         <div class="info-item">
           <span class="info-item__icon">📊</span>
-          <div>
-            <strong>RSI (상대강도지수)</strong>
-            <p>과매수/과매도 구간을 감지하여 가격 반전 신호를 반영합니다.</p>
-          </div>
+          <div><strong>RSI (14)</strong><p>Wilder 방식 상대강도지수로 과매수(70+)/과매도(30-) 신호를 반영합니다.</p></div>
         </div>
         <div class="info-item">
           <span class="info-item__icon">🔀</span>
-          <div>
-            <strong>MACD 크로스</strong>
-            <p>단기-장기 EMA 차이로 모멘텀 전환 시점을 판단합니다.</p>
-          </div>
+          <div><strong>MACD (12/26/9)</strong><p>MACD 히스토그램 부호와 크기로 모멘텀 전환 강도를 측정합니다.</p></div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">📉</span>
+          <div><strong>볼린저 밴드 (20,2σ)</strong><p>가격이 상·하밴드에 근접할수록 반전 확률을 높여 예측에 반영합니다.</p></div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">⚡</span>
+          <div><strong>스토캐스틱 (14,3)</strong><p>%K/%D 크로스로 추가적인 과매수/과매도 확인 신호를 제공합니다.</p></div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">🔥</span>
+          <div><strong>ATR 변동성 스케일링</strong><p>Average True Range로 변동성에 비례하여 예측 변화폭을 자동 조절합니다.</p></div>
         </div>
         <div class="info-item">
           <span class="info-item__icon">⚖️</span>
-          <div>
-            <strong>평균 회귀</strong>
-            <p>30일 이동평균 대비 이격도를 반영하여 과도한 이탈을 보정합니다.</p>
-          </div>
+          <div><strong>평균 회귀 (30일)</strong><p>30일 SMA 대비 이격도를 반영해 극단적 이탈을 보정합니다.</p></div>
+        </div>
+        <div class="info-item">
+          <span class="info-item__icon">🧮</span>
+          <div><strong>가중 앙상블</strong><p>7개 시그널을 신뢰도 가중 합산하여 최종 1분/1일 예측값을 산출합니다.</p></div>
         </div>
       </div>
-      <p class="info-panel__disclaimer">⚠️ 본 예측은 기술적 분석 기반이며, 투자 조언이 아닙니다. 실제 투자 판단은 전문가 상담 후 결정하시기 바랍니다.</p>
+      <p class="info-panel__disclaimer">⚠️ 본 예측은 기술적 분석 기반이며 투자 조언이 아닙니다. 실제 투자 판단은 전문가 상담 후 결정하세요.</p>
     </section>
   </main>
 
   <footer class="footer">
-    <p>Data powered by <a href="https://www.binance.com" target="_blank" rel="noopener">Binance API</a> · Built for GitHub Pages</p>
+    <p>Data by <a href="https://www.binance.com" target="_blank" rel="noopener">Binance Public API</a> · GitHub Pages Static Deploy · v2.1</p>
   </footer>
 
   <script src="app.js"></script>
